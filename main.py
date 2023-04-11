@@ -1,12 +1,12 @@
 import os
-import uuid
 
 from dotenv import load_dotenv
-from telegram import Update, InlineQueryResultCachedSticker
+from telegram import Update
 from telegram.constants import ParseMode
-from telegram.ext import Application, CommandHandler, CallbackContext, InlineQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQueryHandler
 
 import database
+import telegram_helper
 
 # Load the environment variables
 
@@ -46,6 +46,32 @@ async def test_connection(update: Update, context: CallbackContext) -> None:
     return
 
 
+async def send_coffee_options(update: Update, context: CallbackContext) -> None:
+    """Send the coffe menu."""
+    text = "Quelle sera ta source d'énergie aujourd'hui ?"
+    await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
+    return
+
+
+async def handle_callback_query(update: Update, context: CallbackContext) -> None:
+    """Handle the callback query."""
+    query = update.callback_query
+    await query.answer()
+
+    query_parts = query.data.split('_', 1)
+    if len(query_parts) > 1:
+        command, text = query_parts
+    else:
+        command = query_parts
+        text = None
+        print(f"Command: {command} issued without text")
+
+    if command == "coffee":
+        telegram_helper.choose_coffee(text)
+        await query.edit_message_text(text, reply_markup=query.message.reply_markup)
+    return
+
+
 def main() -> None:
     """Start the bot."""
     print("Going live!")
@@ -58,6 +84,11 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("dump", dump))
     application.add_handler(CommandHandler("test", test_connection))
+    application.add_handler(CommandHandler("glou", send_coffee_options))
+
+    # on query answer - handle the query
+    application.add_handler(CallbackQueryHandler(handle_callback_query))
+
 
     # Start the Bot
     print("Bot starting...")
