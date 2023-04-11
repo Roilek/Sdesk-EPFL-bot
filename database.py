@@ -23,4 +23,4 @@ def test_connection(client) -> str:
 
 
 if __name__ == "__main__":
-    test_connection(connect())
+    print(test_connection(connect()))
