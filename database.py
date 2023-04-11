@@ -8,18 +8,18 @@ load_dotenv()
 MONGO_STR = os.getenv("MONGO_STR")
 
 
-def connect():
+def connect() -> pymongo.MongoClient:
     client = pymongo.MongoClient(MONGO_STR)
     return client
 
 
-def test_connection(client):
+def test_connection(client) -> str:
     try:
         client.server_info()
-        print("Connected to MongoDB!")
+        text = "Connected to MongoDB!"
     except pymongo.errors.ServerSelectionTimeoutError:
-        print("Could not connect to MongoDB.")
-    return
+        text = "Could not connect to MongoDB."
+    return text
 
 
 if __name__ == "__main__":
