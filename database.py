@@ -2,12 +2,18 @@ import pymongo
 import pymongo.errors
 import os
 
+from pymongo.collection import Collection
+
 from dotenv import load_dotenv
 
 load_dotenv()
 MONGO_STR = os.getenv("MONGO_STR")
 
-client, db, coffee_table, capsule_table, user_table, command_table = None, None, None, None, None, None
+client, db = None, None
+coffee_table:Collection = None
+capsule_table:Collection = None 
+user_table:Collection = None 
+command_table:Collection = None
 
 def init():
     global client, db, coffee_table, capsule_table, user_table, command_table
@@ -35,7 +41,10 @@ def new_user(user_id, name, surname="", username=""):
 def new_command(user_id, command_id, coffee, capsule, tasse):
     return
 
-#----- STATE MANEGEMENT -----#
+def return_command(command_id):
+    return
+
+#----- STATE MANAGEMENT -----#
 
 #return the command_id of the cycle
 def new_cycle(date):
@@ -84,3 +93,4 @@ if __name__ == "__main__":
     print(test_connection(connect()))
     init()
     print(read_capsules())
+    print(type(capsule_table))
