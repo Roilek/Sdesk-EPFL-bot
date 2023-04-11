@@ -6,6 +6,8 @@ from telegram import Update, InlineQueryResultCachedSticker
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackContext, InlineQueryHandler
 
+import database
+
 # Load the environment variables
 
 load_dotenv()
@@ -33,6 +35,12 @@ async def dump(update: Update, context: CallbackContext) -> None:
     return
 
 
+async def test_connection(update: Update, context: CallbackContext) -> None:
+    """Test the connection to MongoDB."""
+    await update.message.reply_text(database.test_connection(database.connect()))
+    return
+
+
 def main() -> None:
     """Start the bot."""
     print("Going live!")
@@ -44,6 +52,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("dump", dump))
+    application.add_handler(CommandHandler("test", test_connection))
 
     # Start the Bot
     print("Bot starting...")
