@@ -61,7 +61,7 @@ def new_command(user_id, capsule, list_command):
     else:
         tasse = 0
     for command in list_command:
-        coffee = command["coffee"]
+        coffee = command
         new_object_command(user_id, coffee, capsule, tasse)
     return
     
@@ -85,22 +85,27 @@ def delete_command(user_id, tasse):
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
-def return_all_command():
+def return_all_command() -> list[dict[int, str, list[str]]]:
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return 
-    return  command_table.find_many({"command_id": command_id})
+        return "No cycle"
+    # Return a list of commands with coffee field grouped by user_id and command_id and tasse
+    return list(command_table.aggregate([
+        {"$match": {"command_id": command_id}},
+        {"$group": {"_id": {"user_id": "$user_id", "command_id": "$command_id", "tasse": "$tasse"}, "short_name": {"$push": "$coffee"}}},
+        {"$project": {"_id": 0, "user_id": "$_id.user_id", "command_id": "$_id.command_id", "tasse": "$_id.tasse", "short_name": 1}}
+    ]))
 
 def return_user_commande(user_id):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return 
-    return command_table.find_many({"command_id": command_id, "user_id": user_id})
+        return "No cycle"
+    return command_table.find({"command_id": command_id, "user_id": user_id})
 
 def return_all_user_command(user_id):
-    return command_table.find_many({"user_id": user_id})
+    return command_table.find({"user_id": user_id})
 
 
 # ----- STATE MANAGEMENT -----#
@@ -166,8 +171,8 @@ def coffee_from_short_name(short_name):
 
 def capsule_short_name_from_coffee_short_name(short_name):
     """Return the capsule of the coffee from the short name"""
-    print(capsule_table.find_one({"_id": coffee_table.find_one({"short_name": short_name})["capsule"]})["short_name"])
-    return capsule_table.find_one({"_id": coffee_table.find_one({"short_name": short_name})["capsule"]})["short_name"]
+    capsule = coffee_table.find_one({"short_name": short_name})["capsule"]
+    return capsule_table.find_one({"_id": capsule})["short_name"] if capsule is not None else None
 
 
 # ----- CAPSULE MANAGEMENT -----#
