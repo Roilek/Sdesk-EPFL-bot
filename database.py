@@ -94,9 +94,9 @@ def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
 
-def coffee_from_id(id):
+def coffee_from_short_name(short_name):
     """Return the name of the coffee from the id"""
-    return coffee_table.find_one({"_id": id})["name"]
+    return coffee_table.find_one({"short_name": short_name})["name"]
 
 
 def add_coffees(coffee, capsule, option=False):
