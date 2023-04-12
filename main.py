@@ -63,7 +63,7 @@ async def handle_callback_query(update: Update, context: CallbackContext) -> Non
 
     data = telegram_helper.parse_data_text(query.data)
     if data[0] == telegram_helper.consts.COFFEE_COMMAND:
-        text, keyboard = telegram_helper.handle_callback_query_coffee(data[1:])
+        text, keyboard = telegram_helper.handle_callback_query_coffee(data[1:], query.from_user.id)
         await query.edit_message_text(text, reply_markup=keyboard)
     elif data[0] == telegram_helper.consts.GLOU_COMMAND:
         await send_coffee(update, context)
