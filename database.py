@@ -49,19 +49,19 @@ def new_user(user_id, name, surname="", username=""):
 
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
-def new_command(user_id, list_command):
-    tasse = 0 #createTasse
-    #actual_command = return_commande(user_id)
-    #if actual_command is not None:
-        #actual_command = 
-    #else:
-        #tasse = 0
+def new_command(user_id, capsule, list_command):
+    actual_command = return_commande(user_id)
+    if actual_command is not None:
+        tasse = len(command_table.distinct("tasse", {"user_id": user_id}))
+    else:
+        tasse = 0
     for command in list_command:
         coffee = command["coffee"]
-        capsule = command["capsule"]
-        new_command(user_id, coffee, capsule, tasse)
+        new_object_command(user_id, coffee, capsule, tasse)
+    return
+    
 
-def new_command(user_id, coffee, capsule, tasse):
+def new_object_command(user_id, coffee, capsule, tasse):
     coffee = coffeeid_from_short_name(coffee)
     if capsule is not None:
         capsule = capsuleid_from_short_name(capsule)
@@ -159,6 +159,10 @@ def coffee_from_short_name(short_name):
     """Return the name of the coffee from the id"""
     return coffee_table.find_one({"short_name": short_name})["name"]
 
+def capsule_short_name_from_coffee_short_name(short_name):
+    """Return the capsule of the coffee from the short name"""
+    return capsule_table.find_one({"_id": coffee_table.find_one({"short_name": short_name})["capsule"]})["short_name"]
+
 
 # ----- CAPSULE MANAGEMENT -----#
 
@@ -250,3 +254,4 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
+    test()
