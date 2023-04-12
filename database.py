@@ -94,6 +94,11 @@ def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
 
+def coffee_from_id(id):
+    """Return the name of the coffee from the id"""
+    return coffee_table.find_one({"_id": id})["name"]
+
+
 def add_coffees(coffee, capsule, option=False):
     capsule_id = capsule_table.find_one({"name": capsule})["_id"]
     if capsule_id is None:

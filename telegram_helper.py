@@ -51,8 +51,13 @@ def choose_coffee(data_text) -> (str, InlineKeyboardMarkup):
     elif data_text == COFFEE_DROP:
         return "Dommage, passez quand même un bon shift !", None
     else:
-        return f"Ta commande pour le moment\n\t{data_text}\n\nVeux-tu ajouter quelque chose ?", get_coffee_options_keyboard(
-            options=True, data=parse_data_text(data_text))
+        data = parse_data_text(data_text)
+        text = "Ta commande pour le moment\n"
+        text += f"\t{database.coffee_from_id(data[0])}\n"
+        for i in range(1, len(data)):
+            text += f"\t+ {database.coffee_from_id(data[i])}\n"
+        text += "\nVeux-tu ajouter quelque chose ?"
+        return text, get_coffee_options_keyboard(options=True, data=data)
 
 
 def get_coffee_waiting_keyboard() -> InlineKeyboardMarkup:
