@@ -81,7 +81,7 @@ def delete_command(user_id, tasse):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
@@ -89,14 +89,14 @@ def return_all_command():
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     return  command_table.find_many({"command_id": command_id})
 
 def return_user_commande(user_id):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     return command_table.find_many({"command_id": command_id, "user_id": user_id})
 
 def return_all_user_command(user_id):
