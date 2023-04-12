@@ -161,6 +161,7 @@ def coffee_from_short_name(short_name):
 
 def capsule_short_name_from_coffee_short_name(short_name):
     """Return the capsule of the coffee from the short name"""
+    print(capsule_table.find_one({"_id": coffee_table.find_one({"short_name": short_name})["capsule"]})["short_name"])
     return capsule_table.find_one({"_id": coffee_table.find_one({"short_name": short_name})["capsule"]})["short_name"]
 
 

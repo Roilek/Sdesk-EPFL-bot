@@ -19,7 +19,8 @@ HEROKU_PATH = os.getenv('HEROKU_PATH')
 
 async def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    # Register new user TODO
+    user = update.message.from_user
+    database.new_user(user.id, user.first_name, user.last_name, user.username)
     text = "Bienvenue sur le bot du 1234 !\n"
     text += "Ici tu peux commander des super cafés !\n"
     text += "Pour commencer, envoie /glou\n"

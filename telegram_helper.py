@@ -113,7 +113,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
             return "Récapitulatif de ta commande :\n" + display_order(data[1:]), append_buttons(InlineKeyboardMarkup([]), [create_button("Confirmer ✅", get_callback(consts.COFFEE_COMMAND, consts.ORDER_CONFIRM, data[1:])), create_button("Recommencer ❌", get_callback(consts.GLOU_COMMAND))])
         case consts.ORDER_CONFIRM:
             print(f"Adding {data[1:]} for {user_id}")
-            database.new_object_command(user_id, data[1:], database.get_default_capsule_from_coffee_short_name(data[1]))
+            database.new_command(user_id, data[1:], database.capsule_short_name_from_coffee_short_name(data[1]))
             return "Ta commande a bien été prise en compte !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
         case consts.ORDER_DROP:
             return "Ta commande a été annulée ! N'hésite pas à faire signe quand tu voudras des cafés !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
