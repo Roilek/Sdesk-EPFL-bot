@@ -103,13 +103,12 @@ def return_all_command() -> list[dict[str, str, list[str]]]:
         tasses = command_table.distinct('tasse', {"command_id": command_id, "user_id": user_id})
         for tasse in tasses:
             commands = command_table.find({"command_id": command_id, "user_id": user_id, "tasse": tasse})
-            capsule = None if commands[0]['capsule'] is None else (
-            capsule_table.find_one({"_id": commands[0]['capsule']})['name'])
-            print('....')
+            capsule = None if commands[0]['capsule'] is None else (capsule_table.find_one({"_id": commands[0]['capsule']})['name']) 
             list_temp = []
             for command in commands:
-                list_temp.append(coffee_table.find_one({"_id": command['coffee']})['name'])
-            list.append({"user_id": user_id, "capsule": capsule, "coffee": list_temp})
+                list_temp.append(coffee_table.find_one({"_id": command['coffee']})['short_name'])
+            user_name = user_table.find_one({"user_id":user_id})['name']
+            list.append({"user_name": user_name, "capsule": capsule, "coffee": list_temp})
     return list
 
 
@@ -291,4 +290,4 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
-    return_all_command()
+    print(return_all_command())
