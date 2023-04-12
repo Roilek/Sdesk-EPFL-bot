@@ -15,10 +15,13 @@ consts.COFFEE_COMMAND = "coffee"
 consts.COFFEE_START = "start_session"
 consts.COFFEE_STOP = "stop_session"
 consts.COFFEE_DROP = "drop_session"
+consts.COFFEE_LIST = "list_session"
 
 consts.ORDER_START = "start_order"
 consts.ORDER_VALIDATE = "validate_order"
 consts.ORDER_DROP = "drop_order"
+
+consts.GLOU_COMMAND = "glou"
 
 
 def parse_data_text(data_text: str) -> list:
@@ -26,12 +29,18 @@ def parse_data_text(data_text: str) -> list:
     return data_text.split(consts.SEPARATOR)
 
 
-def get_callback(command: str, add_data: str, data: list = None) -> str:
+def get_callback(command: str, add_data: str = None, data: list = None) -> str:
     """Get the callback data."""
-    if data is None:
-        return consts.SEPARATOR.join([command, add_data])
+    if add_data is None:
+        if data is None:
+            return command
+        else:
+            return consts.SEPARATOR.join([command, *data])
     else:
-        return consts.SEPARATOR.join([command, *data, add_data])
+        if data is None:
+            return consts.SEPARATOR.join([command, add_data])
+        else:
+            return consts.SEPARATOR.join([command, *data, add_data])
 
 
 def get_coffee_options_keyboard(options: bool = False, data: list = None) -> InlineKeyboardMarkup:
@@ -41,7 +50,7 @@ def get_coffee_options_keyboard(options: bool = False, data: list = None) -> Inl
     coffee_options = database.read_coffees()
     # Filter the coffee options if needed
     if not options:
-        coffee_options = [option for option in coffee_options if option["option"] == "False"]
+        coffee_options = [option for option in coffee_options if not option["option"]]
     layout = []
     # Split the list into sublists of size COFFEE_OPTIONS_KEYBOARD_COLUMNS
     for i in range(0, len(coffee_options), consts.COFFEE_OPTIONS_KEYBOARD_COLUMNS):
@@ -76,17 +85,23 @@ def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
     new_data = data[0]
     match data[0]:
         case consts.COFFEE_START:
+            from datetime import datetime
+            database.start_cycle(datetime.now())
             return "Les cafés sont lancés ! Quel café veux-tu ?", init_order()
         case consts.COFFEE_DROP:
-            return "Dommage, passez quand même un bon shift !", None
+            return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
         case consts.COFFEE_STOP:
-            pass
+            from datetime import datetime
+            database.stop_cycle(1234, datetime.now())
+            return "Les commandes sont terminées !", append_buttons(InlineKeyboardMarkup([]), [create_button("Voir la liste des commandes", get_callback(consts.COFFEE_LIST))])
+        case consts.COFFEE_LIST:
+            return database.get_orders(), append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
         case consts.ORDER_START:
             pass
         case consts.ORDER_VALIDATE:
             pass
         case consts.ORDER_DROP:
-            pass
+            return "Ta commande a été annulée ! N'hésite pas à faire signe quand tu voudras des cafés !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
         case _:
             text = "Ta commande pour le moment\n"
             text += f"\t{database.coffee_from_short_name(data[0])}\n"
@@ -94,7 +109,7 @@ def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
                 text += f"\t+ {database.coffee_from_short_name(data[i])}\n"
             text += "\nVeux-tu ajouter quelque chose ?"
             return text, append_buttons(get_coffee_options_keyboard(options=True, data=data),
-                                        [create_button("⬅️ Annuler ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP, data)),
+                                        [create_button("⬅️ Annuler ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP)),
                                          create_button("✅ Valider ➡️", get_callback(consts.COFFEE_COMMAND, consts.ORDER_VALIDATE, data))])
 
 

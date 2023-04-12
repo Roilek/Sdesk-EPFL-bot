@@ -53,11 +53,15 @@ async def send_coffee_options(update: Update, context: CallbackContext) -> None:
     # If state is None, send the waiting message
     if state is None:
         text = "Aucune commande n'est en cours"
-        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_waiting_keyboard())
+        reply_markup = telegram_helper.get_coffee_waiting_keyboard()
     # If state is not None, send the coffee options
     else:
         text = "Quelle sera ta source d'énergie aujourd'hui ?"
-        await update.message.reply_text(text, reply_markup=telegram_helper.init_order())
+        reply_markup=telegram_helper.init_order()
+    if update.message is not None:
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    elif update.callback_query is not None:
+        await update.callback_query.edit_message_text(text, reply_markup=reply_markup)
     return
 
 
@@ -70,6 +74,8 @@ async def handle_callback_query(update: Update, context: CallbackContext) -> Non
     if data[0] == telegram_helper.consts.COFFEE_COMMAND:
         text, keyboard = telegram_helper.handle_callback_query_coffee(data[1:])
         await query.edit_message_text(text, reply_markup=keyboard)
+    elif data[0] == telegram_helper.consts.GLOU_COMMAND:
+        await send_coffee_options(update, context)
     return
 
 
