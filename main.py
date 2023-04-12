@@ -23,9 +23,8 @@ async def start(update: Update, context: CallbackContext) -> None:
     database.new_user(user.id, user.first_name, user.last_name, user.username)
     text = "Bienvenue sur le bot du 1234 !\n"
     text += "Ici tu peux commander des super cafés !\n"
-    text += "Pour commencer, envoie /glou\n"
-    text += "Tu peux également envoyer /help pour plus d'infos !"
-    await update.message.reply_text(text)
+    await update.message.delete()
+    await update.message.reply_text(text, reply_markup=telegram_helper.get_start_order_keyboard())
     return
 
 
