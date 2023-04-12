@@ -133,12 +133,3 @@ if __name__ == "__main__":
     print(return_state())
     #stop_cycle(ObjectId("6436776432c034805f1ef06a"), datetime.now())
     print(check_timeout())
-
-
-class CoffeeOrderState:
-    ORDERING = "ordering"
-    WAITING = "waiting"
-
-
-def get_coffee_order_state():
-    return CoffeeOrderState.WAITING

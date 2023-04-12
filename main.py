@@ -49,15 +49,15 @@ async def test_connection(update: Update, context: CallbackContext) -> None:
 async def send_coffee_options(update: Update, context: CallbackContext) -> None:
     """Send the coffe menu."""
     # Get the state of the coffee ordering process
-    state = database.get_coffee_order_state()
-    # If state is ORDERING, send the coffee options
-    if state == database.CoffeeOrderState.ORDERING:
-        text = "Quelle sera ta source d'énergie aujourd'hui ?"
-        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
-    # If state is WAITING, send the waiting message
-    elif state == database.CoffeeOrderState.WAITING:
+    state = database.return_state()
+    # If state is None, send the waiting message
+    if state is None:
         text = "Aucune commande n'est en cours"
         await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_waiting_keyboard())
+    # If state is not None, send the coffee options
+    else:
+        text = "Quelle sera ta source d'énergie aujourd'hui ?"
+        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
     return
 
 
