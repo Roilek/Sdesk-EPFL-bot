@@ -100,6 +100,20 @@ def init_order() -> InlineKeyboardMarkup:
     """Init the order."""
     return append_buttons(append_buttons(get_coffee_options_keyboard(), [create_button("❌ En fait je ne veux pas de café ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]), [create_button("Voir les commandes", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))])
 
+
+def get_list() -> str:
+    """Get the list of orders."""
+    orders = database.return_all_command()
+    if len(orders) == 0:
+        return "Aucune commande n'a été passée pour le moment"
+    else:
+        text = "Liste des commandes\n\n"
+        for order in orders:
+            text += f"{order['user_name']}"
+            text += f" avec une capsule {order['capsule']}\n" if order['capsule'] is not None else "\n"
+            text += display_order(order['coffee']) + "\n"
+        return text
+
 def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, InlineKeyboardMarkup):
     """Choose a coffee"""
     match data[0]:
@@ -112,19 +126,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
             database.stop_cycle()
             return "Les commandes sont arrêtées !", get_start_order_keyboard()
         case consts.CYCLE_LIST:
-            text = "Liste des commandes\n\n"
-            orders = database.return_all_command()
-            if len(orders) == 0:
-                return "Aucune commande n'a été passée", get_start_order_keyboard()
-            for order in orders:
-                text += order['user_name']
-                capsule = order['capsule']
-                if capsule is not None:
-                    text += f" avec une capsule {capsule}\n"
-                else:
-                    text += "\n"
-                text += display_order(order['coffee']) + "\n"
-            return text, append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
+            return get_list(), append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.ORDER_VALIDATION:
             coffees = data[1:]
             text = "Récapitulatif de ta commande :\n" + display_order(coffees)
