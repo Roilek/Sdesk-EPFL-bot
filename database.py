@@ -107,7 +107,7 @@ def return_commandid():
     return cycle["_id"] if cycle is not None else None
 
 def check_timeout():
-    state = return_state()
+    state = ongoing_cycle()
     if state == None:
         return "No timeout"
     if (datetime.now() - state[1]) > CYCLE_TIMEOUT:
