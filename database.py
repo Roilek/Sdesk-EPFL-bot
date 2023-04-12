@@ -49,33 +49,48 @@ def new_user(user_id, name, surname="", username=""):
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
 def new_command(user_id, command_id, coffee, capsule, tasse):
+    coffee = coffeeid_from_short_name(coffee)
+    if capsule is not None:
+        capsule = capsuleid_from_short_name(capsule)
+    command_table.insert_one({"user_id": user_id, "command_id": command_id, "coffee": coffee, "capsule": capsule, "tasse": tasse})
     return
 
+def delete_command(user_id, command_id, tasse):
+    return
 
 def return_command(command_id):
-    return
+    return  command_table.find({"command_id": command_id})
+
+def return_commande(command_id, user_id):
+    return command_table.find_one({"command_id": command_id, "user_id": user_id})
+
+def return_command(command_id, user_id, tasse):
+    return command_table.find_one({"command_id": command_id, "user_id": user_id, "tasse": tasse})
 
 
 # ----- STATE MANAGEMENT -----#
 
 # return the command_id of the cycle
-def start_cycle(date):
+def start_cycle():
     if cycle_table.find_one({"end_date": None}) is not None:
         return "Cycle already started"
-    cycle_table.insert_one({"start_date": date, "end_date": None})
-    return cycle_table.find_one({"end_date": None})["_id"]
+    cycle_table.insert_one({"start_date": datetime.now(), "end_date": None})
+    return "Cycle started"
 
 
-def stop_cycle(command_id, date):
-    print(cycle_table.find_one({"_id": command_id})["start_date"])
-    cycle_table.update_one({"_id": command_id}, {"$set": {"end_date": date}})
-    return 
+def stop_cycle():
+    command_id = return_commandid()
+    if command_id is None:
+        return "No cycle"
+    cycle_table.update_one({"_id": command_id}, {"$set": {"end_date": datetime.now()}})
+    return "Cycle stopped"
 
+def ongoing_cycle():
+    return cycle_table.find_one({"end_date": None}) is not None
 
-# return the actual command_id and date creation or none if no cycle started
-def return_state():
+def return_commandid():
     cycle = cycle_table.find_one({"end_date": None})
-    return cycle if cycle is None else (cycle["_id"], cycle["start_date"])
+    return cycle["_id"] if cycle is not None else None
 
 def check_timeout():
     state = return_state()
@@ -101,13 +116,17 @@ def add_coffees(coffee, capsule=None, option=False):
             return "Capsule not found"
     else:
         capsule_id = None
+    
+    coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
+    return "Success"
+
+def coffeeid_from_short_name(short_name):
+    """Return the id of the coffee from the short name"""
+    return coffee_table.find_one({"short_name": short_name})["_id"]
 
 def coffee_from_short_name(short_name):
     """Return the name of the coffee from the id"""
     return coffee_table.find_one({"short_name": short_name})["name"]
-
-    coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
-    return "Success"
 
 
 # ----- CAPSULE MANEGEMENT -----#
@@ -122,6 +141,14 @@ def add_capsules(capsule, short_name):
         return "Capsule already exist"
     capsule_table.insert_one({"name": capsule, "short_name": short_name})
     return "Success"
+
+def capsuleid_from_short_name(short_name):
+    """Return the id of the capsule from the short name"""
+    return capsule_table.find_one({"short_name": short_name})["_id"]
+
+def capsule_from_short_name(short_name):
+    """Return the name of the capsule from the id"""
+    return capsule_table.find_one({"short_name": short_name})["name"]
 
 # ----- INIT FUNCTION -----#
 #Use only to create again database - WARNING cancel all data !!!
@@ -141,6 +168,7 @@ def init_database():
     short_name_coffee = set()
     
     for capsule_data in capsules_data:
+        #check if short name is unique
         if capsule_data['short_name'] in short_name_capsule:
             print("Capsule short name not unique")
             return
@@ -151,11 +179,15 @@ def init_database():
     print("Capsule added")
     
     for coffee_data in coffees_data:
+        #transform string to boolean
+        coffee_data['option'] = coffee_data['option'] == 'True'
+        #check if short name is unique
         if coffee_data['short_name'] in short_name_coffee:
             print("Coffee short name not unique")
             return
         else:
             short_name_coffee.add(coffee_data['short_name'])
+            #check if capsule exist and transform to capsule objectId
             if coffee_data['capsule'] != "":
                 if capsule_table.find_one({"name": coffee_data['capsule']}) is None:
                     print("Capsule "+ coffee_data['capsule'] +" not found")
