@@ -6,18 +6,24 @@ from pymongo.collection import Collection
 
 from dotenv import load_dotenv
 
+from datetime import datetime, timedelta
+from bson.objectid import ObjectId #for testing
+
 load_dotenv()
 MONGO_STR = os.getenv("MONGO_STR")
+
+CYCLE_TIMEOUT = timedelta(minutes=10) # 1 hour
 
 client, db = None, None
 coffee_table: Collection = None
 capsule_table: Collection = None
 user_table: Collection = None
+cycle_table:Collection = None
 command_table: Collection = None
 
 
 def init():
-    global client, db, coffee_table, capsule_table, user_table, command_table
+    global client, db, coffee_table, capsule_table, user_table, command_table, cycle_table
     client = connect()
 
     db = client["1234-bot"]
@@ -25,6 +31,7 @@ def init():
     coffee_table = db["coffee"]
     capsule_table = db["capsule"]
     user_table = db["user"]
+    cycle_table = db["cycle"]
     command_table = db["command"]
 
 
@@ -51,38 +58,54 @@ def return_command(command_id):
 # ----- STATE MANAGEMENT -----#
 
 # return the command_id of the cycle
-def new_cycle(date):
-    return
+def start_cycle(date):
+    if cycle_table.find_one({"end_date": None}) is not None:
+        return "Cycle already started"
+    cycle_table.insert_one({"start_date": date, "end_date": None})
+    return cycle_table.find_one({"end_date": None})["_id"]
 
 
 def stop_cycle(command_id, date):
-    return
+    print(cycle_table.find_one({"_id": command_id})["start_date"])
+    cycle_table.update_one({"_id": command_id}, {"$set": {"end_date": date}})
+    return 
 
 
 # return the actual command_id and date creation or none if no cycle started
 def return_state():
-    return
+    cycle = cycle_table.find_one({"end_date": None})
+    return cycle if cycle is None else (cycle["_id"], cycle["start_date"])
+
+def check_timeout():
+    state = return_state()
+    if state == None:
+        return "No timeout"
+    if (datetime.now() - state[1]) > CYCLE_TIMEOUT:
+        stop_cycle(state[0], datetime.now())
+        return str(state[0]) + " timeout"
+    else :
+        return "No timeout"
 
 
 # ----- COFFEE MANAGEMENT -----#
 
 # Enumerate the choice of coffee - return list of string of coffee + default capsule
-def read_coffees() -> list[dict[id, str, id]]:
+def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
 
-def add_coffees(coffee, capsule):
+def add_coffees(coffee, capsule, option=False):
     capsule_id = capsule_table.find_one({"name": capsule})["_id"]
     if capsule_id is None:
         return "Capsule not found"
-    coffee_table.insert_one({"name": coffee, "capsule": capsule_id})
+    coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
     return "Success"
 
 
 # ----- CAPSULE MANEGEMENT -----#
 
 # enumerate the choice of capsule - return list of string of capsule
-def read_capsules():
+def read_capsules() -> list[dict[id, str]]:
     return list(capsule_table.find())
 
 
@@ -103,6 +126,11 @@ def test_connection(client) -> str:
 if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
-    # print(read_capsules())
-    # print(type(capsule_table))
+    print(read_capsules())
+    print(read_coffees())
+    print("----------")
+    print("----------")
+    print(return_state())
+    #stop_cycle(ObjectId("6436776432c034805f1ef06a"), datetime.now())
+    print(check_timeout())
 
