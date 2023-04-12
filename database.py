@@ -254,4 +254,3 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
-    test()
