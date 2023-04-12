@@ -44,13 +44,18 @@ def connect() -> pymongo.MongoClient:
 
 # -----USER MANAGEMENT-----#
 def new_user(user_id, name, surname="", username=""):
+    user_table.insert_one({"user_id": user_id, "name": name, "surname": surname, "username": username})
+    return
+
+def delete_user(user_id):
+    user_table.delete_one({"user_id": user_id})
     return
 
 
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
 def new_command(user_id, capsule, list_command):
-    actual_command = return_commande(user_id)
+    actual_command = return_user_commande(user_id)
     if actual_command is not None:
         tasse = len(command_table.distinct("tasse", {"user_id": user_id}))
     else:
@@ -80,21 +85,21 @@ def delete_command(user_id, tasse):
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
-def return_command():
+def return_all_command():
     if ongoing_cycle():
         command_id = return_commandid()
     else:
         return "No cycle"
     return  command_table.find_many({"command_id": command_id})
 
-def return_commande(user_id):
+def return_user_commande(user_id):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
         return "No cycle"
     return command_table.find_many({"command_id": command_id, "user_id": user_id})
 
-def all_command(user_id):
+def return_all_user_command(user_id):
     return command_table.find_many({"user_id": user_id})
 
 
@@ -254,4 +259,3 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
-    test()
