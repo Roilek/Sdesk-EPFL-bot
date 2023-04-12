@@ -94,7 +94,7 @@ def return_all_command() -> list[dict[str, str, list[str]]]:
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return
+        return []
         # Return a list of commands with coffee field grouped by user_id and command_id and tasse
     list = []
 

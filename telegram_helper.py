@@ -123,8 +123,10 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         case consts.CYCLE_DROP:
             return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", get_start_order_keyboard()
         case consts.CYCLE_STOP:
+            text = "Les commandes sont finies !\n\n"
+            text += get_list()
             database.stop_cycle()
-            return "Les commandes sont arrêtées !", get_start_order_keyboard()
+            return text, get_start_order_keyboard()
         case consts.CYCLE_LIST:
             return get_list(), append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.ORDER_VALIDATION:
@@ -142,7 +144,6 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
             return text, InlineKeyboardMarkup(keyboard)
         case consts.ORDER_CONFIRM:
             capsule = None
-            print(data)
             for i in range(len(data)-1, 0, -1):
                 capsule = database.capsule_short_name_from_coffee_short_name(data[i])
                 if capsule is not None:
