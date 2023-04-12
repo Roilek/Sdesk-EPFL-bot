@@ -1,6 +1,7 @@
 import pymongo
 import pymongo.errors
 import os
+import csv
 
 from pymongo.collection import Collection
 
@@ -94,10 +95,13 @@ def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
 
-def add_coffees(coffee, capsule, option=False):
-    capsule_id = capsule_table.find_one({"name": capsule})["_id"]
-    if capsule_id is None:
-        return "Capsule not found"
+def add_coffees(coffee, capsule=None, option=False):
+    if capsule is not None:
+        capsule_id = capsule_table.find_one({"name": capsule})["_id"]
+        if capsule_id is None:
+            return "Capsule not found"
+    else:
+        capsule_id = None
     coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
     return "Success"
 
@@ -105,13 +109,60 @@ def add_coffees(coffee, capsule, option=False):
 # ----- CAPSULE MANEGEMENT -----#
 
 # enumerate the choice of capsule - return list of string of capsule
-def read_capsules() -> list[dict[id, str]]:
+def read_capsules() -> list[dict[id, str, str]]:
     return list(capsule_table.find())
 
 
-def add_capsules(capsule):
-    capsule_table.insert_one({"name": capsule})
+def add_capsules(capsule, short_name):
+    if capsule_table.find_one({"short_name": short_name}) is not None:
+        return "Capsule already exist"
+    capsule_table.insert_one({"name": capsule, "short_name": short_name})
     return "Success"
+
+# ----- INIT FUNCTION -----#
+#Use only to create again database - WARNING cancel all data !!!
+def init_database():
+    capsule_table.delete_many({})
+    coffee_table.delete_many({})
+    print("Database deleted")
+
+    with open('resources/database/capsule.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        capsules_data = [row for row in reader]
+    with open('resources/database/coffee.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        coffees_data = [row for row in reader]
+
+    short_name_capsule = set()
+    short_name_coffee = set()
+    
+    for capsule_data in capsules_data:
+        if capsule_data['short_name'] in short_name_capsule:
+            print("Capsule short name not unique")
+            return
+        else:
+            short_name_capsule.add(capsule_data['short_name'])
+
+    capsule_table.insert_many(capsules_data)
+    print("Capsule added")
+    
+    for coffee_data in coffees_data:
+        if coffee_data['short_name'] in short_name_coffee:
+            print("Coffee short name not unique")
+            return
+        else:
+            short_name_coffee.add(coffee_data['short_name'])
+            if coffee_data['capsule'] != "":
+                if capsule_table.find_one({"name": coffee_data['capsule']}) is None:
+                    print("Capsule "+ coffee_data['capsule'] +" not found")
+                    return
+                coffee_data['capsule'] = capsule_table.find_one({"name": coffee_data['capsule']})['_id']
+            else:
+                coffee_data['capsule'] = None
+
+    coffee_table.insert_many(coffees_data)
+    print("Coffee added")
+
 
 
 def test_connection(client) -> str:
@@ -126,10 +177,4 @@ def test_connection(client) -> str:
 if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
-    print(read_capsules())
-    print(read_coffees())
-    print("----------")
-    print("----------")
-    print(return_state())
-    #stop_cycle(ObjectId("6436776432c034805f1ef06a"), datetime.now())
-    print(check_timeout())
+    print("-----")
