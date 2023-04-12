@@ -85,14 +85,12 @@ def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
     new_data = data[0]
     match data[0]:
         case consts.COFFEE_START:
-            from datetime import datetime
-            database.start_cycle(datetime.now())
+            database.start_cycle()
             return "Les cafés sont lancés ! Quel café veux-tu ?", init_order()
         case consts.COFFEE_DROP:
             return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
         case consts.COFFEE_STOP:
-            from datetime import datetime
-            database.stop_cycle(1234, datetime.now())
+            database.stop_cycle()
             return "Les commandes sont terminées !", append_buttons(InlineKeyboardMarkup([]), [create_button("Voir la liste des commandes", get_callback(consts.COFFEE_LIST))])
         case consts.COFFEE_LIST:
             return database.get_orders(), append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
