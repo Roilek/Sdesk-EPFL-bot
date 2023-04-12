@@ -48,24 +48,38 @@ def new_user(user_id, name, surname="", username=""):
 
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
-def new_command(user_id, command_id, coffee, capsule, tasse):
+def new_command(user_id, coffee, capsule, tasse):
     coffee = coffeeid_from_short_name(coffee)
     if capsule is not None:
         capsule = capsuleid_from_short_name(capsule)
+    if ongoing_cycle():
+        command_id = return_commandid()
+    else:
+        return "No cycle"
     command_table.insert_one({"user_id": user_id, "command_id": command_id, "coffee": coffee, "capsule": capsule, "tasse": tasse})
+    return "Success"
+
+def delete_command(user_id, tasse):
+    if ongoing_cycle():
+        command_id = return_commandid()
+    else:
+        return "No cycle"
+    command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
-def delete_command(user_id, command_id, tasse):
-    return
-
-def return_command(command_id):
+def return_command():
+    if ongoing_cycle():
+        command_id = return_commandid()
+    else:
+        return "No cycle"
     return  command_table.find({"command_id": command_id})
 
-def return_commande(command_id, user_id):
+def return_commande(user_id):
+    if ongoing_cycle():
+        command_id = return_commandid()
+    else:
+        return "No cycle"
     return command_table.find_one({"command_id": command_id, "user_id": user_id})
-
-def return_command(command_id, user_id, tasse):
-    return command_table.find_one({"command_id": command_id, "user_id": user_id, "tasse": tasse})
 
 
 # ----- STATE MANAGEMENT -----#
