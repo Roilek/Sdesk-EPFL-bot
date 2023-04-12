@@ -8,7 +8,6 @@ from pymongo.collection import Collection
 from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
-from bson.objectid import ObjectId #for testing
 
 load_dotenv()
 MONGO_STR = os.getenv("MONGO_STR")
@@ -21,10 +20,11 @@ capsule_table: Collection = None
 user_table: Collection = None
 cycle_table:Collection = None
 command_table: Collection = None
+favorite_table: Collection = None
 
 
 def init():
-    global client, db, coffee_table, capsule_table, user_table, command_table, cycle_table
+    global client, db, coffee_table, capsule_table, user_table, command_table, cycle_table, favorite_table
     client = connect()
 
     db = client["1234-bot"]
@@ -34,6 +34,7 @@ def init():
     user_table = db["user"]
     cycle_table = db["cycle"]
     command_table = db["command"]
+    favorite_table = db["favorite"]
 
 
 def connect() -> pymongo.MongoClient:
@@ -107,12 +108,13 @@ def return_commandid():
     return cycle["_id"] if cycle is not None else None
 
 def check_timeout():
-    state = return_state()
-    if state == None:
-        return "No timeout"
-    if (datetime.now() - state[1]) > CYCLE_TIMEOUT:
-        stop_cycle(state[0], datetime.now())
-        return str(state[0]) + " timeout"
+    command_id = return_commandid()
+    if command_id == None:
+        return "No cycle"
+    start_time = cycle_table.find_one({"_id": command_id})["start_date"]
+    if (datetime.now() - start_time) > CYCLE_TIMEOUT:
+        stop_cycle()
+        return str(command_id) + " timeout"
     else :
         return "No timeout"
 
@@ -163,6 +165,11 @@ def capsuleid_from_short_name(short_name):
 def capsule_from_short_name(short_name):
     """Return the name of the capsule from the id"""
     return capsule_table.find_one({"short_name": short_name})["name"]
+
+# ----- FAVORITE MANAGEMENT -----#
+def add_favorite(user_id, tasse):
+    command_id = return_commandid()
+    
 
 # ----- INIT FUNCTION -----#
 #Use only to create again database - WARNING cancel all data !!!
