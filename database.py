@@ -49,6 +49,18 @@ def new_user(user_id, name, surname="", username=""):
 
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
+def new_command(user_id, list_command):
+    tasse = 0 #createTasse
+    #actual_command = return_commande(user_id)
+    #if actual_command is not None:
+        #actual_command = 
+    #else:
+        #tasse = 0
+    for command in list_command:
+        coffee = command["coffee"]
+        capsule = command["capsule"]
+        new_command(user_id, coffee, capsule, tasse)
+
 def new_command(user_id, coffee, capsule, tasse):
     coffee = coffeeid_from_short_name(coffee)
     if capsule is not None:
@@ -73,14 +85,17 @@ def return_command():
         command_id = return_commandid()
     else:
         return "No cycle"
-    return  command_table.find({"command_id": command_id})
+    return  command_table.find_many({"command_id": command_id})
 
 def return_commande(user_id):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
         return "No cycle"
-    return command_table.find_one({"command_id": command_id, "user_id": user_id})
+    return command_table.find_many({"command_id": command_id, "user_id": user_id})
+
+def all_command(user_id):
+    return command_table.find_many({"user_id": user_id})
 
 
 # ----- STATE MANAGEMENT -----#
@@ -145,7 +160,7 @@ def coffee_from_short_name(short_name):
     return coffee_table.find_one({"short_name": short_name})["name"]
 
 
-# ----- CAPSULE MANEGEMENT -----#
+# ----- CAPSULE MANAGEMENT -----#
 
 # enumerate the choice of capsule - return list of string of capsule
 def read_capsules() -> list[dict[id, str, str]]:
@@ -169,7 +184,7 @@ def capsule_from_short_name(short_name):
 # ----- FAVORITE MANAGEMENT -----#
 def add_favorite(user_id, tasse):
     command_id = return_commandid()
-    
+
 
 # ----- INIT FUNCTION -----#
 #Use only to create again database - WARNING cancel all data !!!
