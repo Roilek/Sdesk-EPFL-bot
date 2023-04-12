@@ -43,6 +43,13 @@ def get_callback(command: str, add_data: str = None, data: list = None) -> str:
             return consts.SEPARATOR.join([command, *data, add_data])
 
 
+def get_coffee_options() -> (str, InlineKeyboardMarkup):
+    if not database.ongoing_cycle():
+        return "Aucune commande n'est en cours", get_coffee_waiting_keyboard()
+    else:
+        return "Quelle sera ta source d'énergie aujourd'hui ?", init_order()
+
+
 def get_coffee_options_keyboard(options: bool = False, data: list = None) -> InlineKeyboardMarkup:
     """Get the coffee options keyboard."""
     if data is None:
@@ -78,7 +85,7 @@ def append_buttons(keyboard: InlineKeyboardMarkup, buttons: list) -> InlineKeybo
 
 def init_order() -> InlineKeyboardMarkup:
     """Init the order."""
-    return append_buttons(get_coffee_options_keyboard(), [create_button("❌ Finalement je prends un thé ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))])
+    return append_buttons(append_buttons(get_coffee_options_keyboard(), [create_button("❌ Finalement je prends un thé ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]),[create_button("Arrêter la commande", get_callback(consts.COFFEE_COMMAND, consts.COFFEE_STOP))])
 
 def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
     """Choose a coffee"""
@@ -100,7 +107,7 @@ def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
             pass
         case consts.ORDER_DROP:
             return "Ta commande a été annulée ! N'hésite pas à faire signe quand tu voudras des cafés !", append_buttons(InlineKeyboardMarkup([]), [create_button("Je veux des cafés ☕️", get_callback(consts.GLOU_COMMAND))])
-        case _:
+        case _ if database.ongoing_cycle():
             text = "Ta commande pour le moment\n"
             text += f"\t{database.coffee_from_short_name(data[0])}\n"
             for i in range(1, len(data)):
@@ -109,6 +116,8 @@ def handle_callback_query_coffee(data: list) -> (str, InlineKeyboardMarkup):
             return text, append_buttons(get_coffee_options_keyboard(options=True, data=data),
                                         [create_button("⬅️ Annuler ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP)),
                                          create_button("✅ Valider ➡️", get_callback(consts.COFFEE_COMMAND, consts.ORDER_VALIDATE, data))])
+        case _: # no ongoing cycle
+            return get_coffee_options()
 
 
 def get_coffee_waiting_keyboard() -> InlineKeyboardMarkup:
