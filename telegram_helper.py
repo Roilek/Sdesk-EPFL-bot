@@ -118,7 +118,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                 return "Aucune commande n'a été passée", get_start_order_keyboard()
             for order in orders:
                 print(order)
-                # text += f"- {order['user_id']} with {order['capsule']} : {display_order(order['short_name'])}\n"
+                text += f"- {order['user_id']} avec une capsule {order['capsule']} : {display_order(order['short_name'])}\n"
             return text, append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.ORDER_VALIDATION:
             coffees = data[1:]
@@ -140,6 +140,13 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         case consts.ORDER_DROP:
             return "N'hésite pas à cliquer ci-dessous si tu veux du café !", get_start_order_keyboard()
         case _ if database.ongoing_cycle():
+            # sort data to have options at the end
+            options = []
+            for i in range(len(data)-1, -1, -1):
+                if data[i] in consts.COFFEE_OPTIONS:
+                    options.append(data[i])
+                    data.pop(i)
+            data += options
             text = "Ta commande pour le moment\n"
             text += display_order(data)
             text += "\nVeux-tu ajouter quelque chose ?"
