@@ -17,7 +17,7 @@ def get_coffee_options_keyboard() -> InlineKeyboardMarkup:
     for i in range(len(layout)):
         line = []
         for j in range(len(layout[i])):
-            keyboard[i].append(InlineKeyboardButton(layout[i][j]["name"],
+            line.append(InlineKeyboardButton(layout[i][j]["name"],
                                                     callback_data="coffee_"+str(layout[i][j]["_id"])))
         keyboard.append(line)
     return InlineKeyboardMarkup(keyboard)

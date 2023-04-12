@@ -67,8 +67,7 @@ async def handle_callback_query(update: Update, context: CallbackContext) -> Non
         print(f"Command: {command} issued without text")
 
     if command == "coffee":
-        telegram_helper.choose_coffee(text)
-        await query.edit_message_text(text, reply_markup=query.message.reply_markup)
+        await query.edit_message_text(telegram_helper.choose_coffee(text), reply_markup=query.message.reply_markup)
     return
 
 
