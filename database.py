@@ -106,3 +106,11 @@ if __name__ == "__main__":
     # print(read_capsules())
     # print(type(capsule_table))
 
+
+class CoffeeOrderState:
+    ORDERING = "ordering"
+    WAITING = "waiting"
+
+
+def get_coffee_order_state():
+    return CoffeeOrderState.WAITING

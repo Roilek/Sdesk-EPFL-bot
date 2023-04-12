@@ -48,8 +48,16 @@ async def test_connection(update: Update, context: CallbackContext) -> None:
 
 async def send_coffee_options(update: Update, context: CallbackContext) -> None:
     """Send the coffe menu."""
-    text = "Quelle sera ta source d'énergie aujourd'hui ?"
-    await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
+    # Get the state of the coffee ordering process
+    state = database.get_coffee_order_state()
+    # If state is ORDERING, send the coffee options
+    if state == database.CoffeeOrderState.ORDERING:
+        text = "Quelle sera ta source d'énergie aujourd'hui ?"
+        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
+    # If state is WAITING, send the waiting message
+    elif state == database.CoffeeOrderState.WAITING:
+        text = "Aucune commande n'est en cours"
+        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_waiting_keyboard())
     return
 
 
@@ -58,16 +66,20 @@ async def handle_callback_query(update: Update, context: CallbackContext) -> Non
     query = update.callback_query
     await query.answer()
 
-    query_parts = query.data.split('_', 1)
+    query_parts = query.data.split(telegram_helper.SEPARATOR, 1)
     if len(query_parts) > 1:
-        command, text = query_parts
+        command, data = query_parts
     else:
         command = query_parts
-        text = None
+        data = None
         print(f"Command: {command} issued without text")
 
-    if command == "coffee":
-        await query.edit_message_text(telegram_helper.choose_coffee(text), reply_markup=query.message.reply_markup)
+    if command == telegram_helper.COFFEE_COMMAND:
+        text, keyboard = telegram_helper.choose_coffee(data)
+        print(f"Command: {command} issued with text: {data}")
+        print(f"Text: {text}")
+        print(f"Keyboard: {keyboard}")
+        await query.edit_message_text(text, reply_markup=keyboard)
     return
 
 
