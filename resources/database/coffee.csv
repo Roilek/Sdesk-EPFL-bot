@@ -1,0 +1,15 @@
+id, coffee, capsule, option, short_name
+1, Ristretto, rouge, None, RIS
+2, Espresso, vert, None, ESP
+3, Lungo, rouge, None, LUN
+4, Mousse de lait chaud, None, None, MOC
+5, Lait chaud, None, None, LAC
+6, Mousse de lait froid, None, None, MOF
+7, Renversé, vert, None, REN
+8, Espresso macchiato,rouge, None, ESM
+9, Cappucino,rouge, None, CAP
+10, Latte macchiato,rouge, None, LAM
+11, Macchiato glacé, rouge, None, MAG
+12, Lait froid, None, None, LAF
+13, Sucre, None, True, SUC
+14, Cacao, None, True, CAC
