@@ -81,27 +81,38 @@ def delete_command(user_id, tasse):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
-def return_all_command() -> list[dict[int, str, list[str]]]:
+def return_all_command() -> list[dict[str, str, list[str]]]:
+                                    #user_id, capsule, coffee
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     # Return a list of commands with coffee field grouped by user_id and command_id and tasse
-    return list(command_table.aggregate([
-        {"$match": {"command_id": command_id}},
-        {"$group": {"_id": {"user_id": "$user_id", "command_id": "$command_id", "tasse": "$tasse"}, "short_name": {"$push": "$coffee"}}},
-        {"$project": {"_id": 0, "user_id": "$_id.user_id", "command_id": "$_id.command_id", "tasse": "$_id.tasse", "short_name": 1}}
-    ]))
+    list = []
+
+    user = command_table.distinct('user_id',{"command_id": command_id})
+    for user_id in user:
+        tasses = command_table.distinct('tasse', {"command_id": command_id, "user_id": user_id})
+        for tasse in tasses:
+            commands = command_table.find({"command_id": command_id, "user_id": user_id, "tasse": tasse})
+            capsule = None if commands[0]['capsule'] is None else (capsule_table.find_one({"_id": commands[0]['capsule']})['name']) 
+            print('....')
+            list_temp = []
+            for command in commands:
+                list_temp.append(coffee_table.find_one({"_id": command['coffee']})['name'])
+            list.append({"user_id": user_id, "capsule": capsule, "coffee": list_temp})
+
+    return list
 
 def return_user_commande(user_id):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return "No cycle"
+        return 
     return command_table.find({"command_id": command_id, "user_id": user_id})
 
 def return_all_user_command(user_id):
@@ -265,3 +276,4 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
+    return_all_command()
