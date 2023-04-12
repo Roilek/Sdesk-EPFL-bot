@@ -94,7 +94,6 @@ def check_timeout():
 def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
-
 def add_coffees(coffee, capsule=None, option=False):
     if capsule is not None:
         capsule_id = capsule_table.find_one({"name": capsule})["_id"]
@@ -102,6 +101,11 @@ def add_coffees(coffee, capsule=None, option=False):
             return "Capsule not found"
     else:
         capsule_id = None
+
+def coffee_from_short_name(short_name):
+    """Return the name of the coffee from the id"""
+    return coffee_table.find_one({"short_name": short_name})["name"]
+
     coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
     return "Success"
 

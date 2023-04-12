@@ -57,7 +57,7 @@ async def send_coffee_options(update: Update, context: CallbackContext) -> None:
     # If state is not None, send the coffee options
     else:
         text = "Quelle sera ta source d'énergie aujourd'hui ?"
-        await update.message.reply_text(text, reply_markup=telegram_helper.get_coffee_options_keyboard())
+        await update.message.reply_text(text, reply_markup=telegram_helper.init_order())
     return
 
 
@@ -66,19 +66,9 @@ async def handle_callback_query(update: Update, context: CallbackContext) -> Non
     query = update.callback_query
     await query.answer()
 
-    query_parts = query.data.split(telegram_helper.SEPARATOR, 1)
-    if len(query_parts) > 1:
-        command, data = query_parts
-    else:
-        command = query_parts
-        data = None
-        print(f"Command: {command} issued without text")
-
-    if command == telegram_helper.COFFEE_COMMAND:
-        text, keyboard = telegram_helper.choose_coffee(data)
-        print(f"Command: {command} issued with text: {data}")
-        print(f"Text: {text}")
-        print(f"Keyboard: {keyboard}")
+    data = telegram_helper.parse_data_text(query.data)
+    if data[0] == telegram_helper.consts.COFFEE_COMMAND:
+        text, keyboard = telegram_helper.handle_callback_query_coffee(data[1:])
         await query.edit_message_text(text, reply_markup=keyboard)
     return
 
