@@ -12,13 +12,13 @@ from datetime import datetime, timedelta
 load_dotenv()
 MONGO_STR = os.getenv("MONGO_STR")
 
-CYCLE_TIMEOUT = timedelta(minutes=10) # 1 hour
+CYCLE_TIMEOUT = timedelta(minutes=10)  # 1 hour
 
 client, db = None, None
 coffee_table: Collection = None
 capsule_table: Collection = None
 user_table: Collection = None
-cycle_table:Collection = None
+cycle_table: Collection = None
 command_table: Collection = None
 favorite_table: Collection = None
 
@@ -47,6 +47,7 @@ def new_user(user_id, name, surname="", username=""):
     user_table.insert_one({"user_id": user_id, "name": name, "surname": surname, "username": username})
     return
 
+
 def delete_user(user_id):
     user_table.delete_one({"user_id": user_id})
     return
@@ -64,7 +65,7 @@ def new_command(user_id, capsule, list_command):
         coffee = command
         new_object_command(user_id, coffee, capsule, tasse)
     return
-    
+
 
 def new_object_command(user_id, coffee, capsule, tasse):
     coffee = coffeeid_from_short_name(coffee)
@@ -74,24 +75,28 @@ def new_object_command(user_id, coffee, capsule, tasse):
         command_id = return_commandid()
     else:
         return "No cycle"
-    command_table.insert_one({"user_id": user_id, "command_id": command_id, "coffee": coffee, "capsule": capsule, "tasse": tasse})
+    command_table.insert_one(
+        {"user_id": user_id, "command_id": command_id, "coffee": coffee, "capsule": capsule, "tasse": tasse})
     return "Success"
+
 
 def delete_command(user_id, tasse):
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return 
+        return
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
+
 def return_all_command(user_id=None) -> list[dict[str, str, list[str]]]:
                                     #user_id, capsule, coffee
+
     if ongoing_cycle():
         command_id = return_commandid()
     else:
-        return 
-    # Return a list of commands with coffee field grouped by user_id and command_id and tasse
+        return []
+        # Return a list of commands with coffee field grouped by user_id and command_id and tasse
     list = []
     if user_id is not None:
         users = user_id
@@ -130,12 +135,15 @@ def stop_cycle():
     cycle_table.update_one({"_id": command_id}, {"$set": {"end_date": datetime.now()}})
     return "Cycle stopped"
 
+
 def ongoing_cycle():
     return cycle_table.find_one({"end_date": None}) is not None
+
 
 def return_commandid():
     cycle = cycle_table.find_one({"end_date": None})
     return cycle["_id"] if cycle is not None else None
+
 
 def check_timeout():
     command_id = return_commandid()
@@ -145,7 +153,7 @@ def check_timeout():
     if (datetime.now() - start_time) > CYCLE_TIMEOUT:
         stop_cycle()
         return str(command_id) + " timeout"
-    else :
+    else:
         return "No timeout"
 
 
@@ -155,6 +163,7 @@ def check_timeout():
 def read_coffees() -> list[dict[id, str, id, bool]]:
     return list(coffee_table.find())
 
+
 def add_coffees(coffee, capsule=None, option=False):
     if capsule is not None:
         capsule_id = capsule_table.find_one({"name": capsule})["_id"]
@@ -162,17 +171,20 @@ def add_coffees(coffee, capsule=None, option=False):
             return "Capsule not found"
     else:
         capsule_id = None
-    
+
     coffee_table.insert_one({"name": coffee, "capsule": capsule_id, "option": option})
     return "Success"
+
 
 def coffeeid_from_short_name(short_name):
     """Return the id of the coffee from the short name"""
     return coffee_table.find_one({"short_name": short_name})["_id"]
 
+
 def coffee_from_short_name(short_name):
     """Return the name of the coffee from the id"""
     return coffee_table.find_one({"short_name": short_name})["name"]
+
 
 def capsule_short_name_from_coffee_short_name(short_name):
     """Return the capsule of the coffee from the short name"""
@@ -193,13 +205,16 @@ def add_capsules(capsule, short_name):
     capsule_table.insert_one({"name": capsule, "short_name": short_name})
     return "Success"
 
+
 def capsuleid_from_short_name(short_name):
     """Return the id of the capsule from the short name"""
     return capsule_table.find_one({"short_name": short_name})["_id"]
 
+
 def capsule_from_short_name(short_name):
     """Return the name of the capsule from the id"""
     return capsule_table.find_one({"short_name": short_name})["name"]
+
 
 # ----- FAVORITE MANAGEMENT -----#
 def add_favorite(user_id, tasse):
@@ -207,7 +222,7 @@ def add_favorite(user_id, tasse):
 
 
 # ----- INIT FUNCTION -----#
-#Use only to create again database - WARNING cancel all data !!!
+# Use only to create again database - WARNING cancel all data !!!
 def init_database():
     capsule_table.delete_many({})
     coffee_table.delete_many({})
@@ -222,9 +237,9 @@ def init_database():
 
     short_name_capsule = set()
     short_name_coffee = set()
-    
+
     for capsule_data in capsules_data:
-        #check if short name is unique
+        # check if short name is unique
         if capsule_data['short_name'] in short_name_capsule:
             print("Capsule short name not unique")
             return
@@ -233,20 +248,20 @@ def init_database():
 
     capsule_table.insert_many(capsules_data)
     print("Capsule added")
-    
+
     for coffee_data in coffees_data:
-        #transform string to boolean
+        # transform string to boolean
         coffee_data['option'] = coffee_data['option'] == 'True'
-        #check if short name is unique
+        # check if short name is unique
         if coffee_data['short_name'] in short_name_coffee:
             print("Coffee short name not unique")
             return
         else:
             short_name_coffee.add(coffee_data['short_name'])
-            #check if capsule exist and transform to capsule objectId
+            # check if capsule exist and transform to capsule objectId
             if coffee_data['capsule'] != "":
                 if capsule_table.find_one({"name": coffee_data['capsule']}) is None:
-                    print("Capsule "+ coffee_data['capsule'] +" not found")
+                    print("Capsule " + coffee_data['capsule'] + " not found")
                     return
                 coffee_data['capsule'] = capsule_table.find_one({"name": coffee_data['capsule']})['_id']
             else:
@@ -254,7 +269,6 @@ def init_database():
 
     coffee_table.insert_many(coffees_data)
     print("Coffee added")
-
 
 
 def test_connection(client) -> str:

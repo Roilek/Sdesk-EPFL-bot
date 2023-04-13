@@ -100,6 +100,20 @@ def init_order() -> InlineKeyboardMarkup:
     """Init the order."""
     return append_buttons(append_buttons(get_coffee_options_keyboard(), [create_button("❌ En fait je ne veux pas de café ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]), [create_button("Voir les commandes", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))])
 
+
+def get_list() -> str:
+    """Get the list of orders."""
+    orders = database.return_all_command()
+    if len(orders) == 0:
+        return "Aucune commande n'a été passée pour le moment"
+    else:
+        text = "Liste des commandes\n\n"
+        for order in orders:
+            text += f"{order['user_name']}"
+            text += f" avec une capsule {order['capsule']}\n" if order['capsule'] is not None else "\n"
+            text += display_order(order['coffee']) + "\n"
+        return text
+
 def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, InlineKeyboardMarkup):
     """Choose a coffee"""
     match data[0]:
@@ -109,17 +123,12 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         case consts.CYCLE_DROP:
             return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", get_start_order_keyboard()
         case consts.CYCLE_STOP:
+            text = "Les commandes sont finies !\n\n"
+            text += get_list()
             database.stop_cycle()
-            return "Les commandes sont arrêtées !", get_start_order_keyboard()
+            return text, get_start_order_keyboard()
         case consts.CYCLE_LIST:
-            text = "Liste des commandes :\n"
-            orders = database.return_all_command()
-            if len(orders) == 0:
-                return "Aucune commande n'a été passée", get_start_order_keyboard()
-            for order in orders:
-                print(order)
-                # text += f"- {order['user_id']} with {order['capsule']} : {display_order(order['short_name'])}\n"
-            return text, append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
+            return get_list(), append_buttons(InlineKeyboardMarkup([]), [create_button("Back", get_callback(consts.GLOU_COMMAND)), create_button("Stop", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.ORDER_VALIDATION:
             coffees = data[1:]
             text = "Récapitulatif de ta commande :\n" + display_order(coffees)
@@ -129,17 +138,22 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                  InlineKeyboardButton("Confirmer ✅", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CONFIRM, coffees))],
             ]
             if len(coffees) > 1:
-                for i in range(len(coffees)-1, -1, -1):
+                for i in range(len(coffees)-2, -1, -1):
                     keyboard.append([InlineKeyboardButton("➖ " + database.coffee_from_short_name(coffees[i]), callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_VALIDATION, coffees[:i] + coffees[i + 1:]))])
 
             return text, InlineKeyboardMarkup(keyboard)
         case consts.ORDER_CONFIRM:
-            print(f"Adding {data[1:]} for {user_id}")
-            database.new_command(user_id, database.capsule_short_name_from_coffee_short_name(data[1]), data[1:])
+            capsule = None
+            for i in range(len(data)-1, 0, -1):
+                capsule = database.capsule_short_name_from_coffee_short_name(data[i])
+                if capsule is not None:
+                    break
+            database.new_command(user_id, capsule, data[1:])
             return "Ta commande a bien été prise en compte !", get_start_order_keyboard()
         case consts.ORDER_DROP:
             return "N'hésite pas à cliquer ci-dessous si tu veux du café !", get_start_order_keyboard()
         case _ if database.ongoing_cycle():
+            # sort data to have options at the end
             text = "Ta commande pour le moment\n"
             text += display_order(data)
             text += "\nVeux-tu ajouter quelque chose ?"
