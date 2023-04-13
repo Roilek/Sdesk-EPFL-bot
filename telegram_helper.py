@@ -146,7 +146,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                                                create_button("Stop",
                                                              get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.CYCLE_OWN_ORDERS:
-            orders = database.return_all_command()
+            orders = database.return_all_command(user_id)
             keyboard = [[InlineKeyboardButton("Back", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]] # TODO change order_drop
             if len(orders) == 0:
                 return "Tu n'as pas de commandes en cours", get_start_order_keyboard(user_id)
