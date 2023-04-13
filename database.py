@@ -56,7 +56,8 @@ def delete_user(user_id):
 # ----- COMMAND MANAGEMENT -----#
 # store a element of a user command in the database
 def new_command(user_id, capsule, list_command):
-    actual_command = return_user_commande(user_id)
+    actual_command = None if not ongoing_cycle() else command_table.find({"command_id": return_commandid(), "user_id": user_id})
+    
     if actual_command is not None:
         tasse = len(command_table.distinct("tasse", {"user_id": user_id}))
     else:
