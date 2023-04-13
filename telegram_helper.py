@@ -40,7 +40,7 @@ def display_order(data: list) -> str:
     return text
 
 
-def get_callback(command: str, add_data: str = None, data: list = None) -> str:
+def get_callback(command: str, add_data: str = None, data: list[str] = None) -> str:
     """Get the callback data."""
     if add_data is None:
         if data is None:
@@ -94,8 +94,9 @@ def get_start_order_keyboard(user_id) -> InlineKeyboardMarkup:
     """Create the launch order button."""
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("Je veux un café ☕️", callback_data=get_callback(consts.GLOU_COMMAND))],
-        [InlineKeyboardButton("Voir mes commandes en cours 🕓",
+        [InlineKeyboardButton("Editer mes commandes en cours 🕓",
                               callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_OWN_ORDERS))],
+        [InlineKeyboardButton("Voir toutes les commandes en cours 📝", callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))],
     ])
     return reply_markup
 
@@ -156,7 +157,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                     text += "Command"
                     text += f" avec une capsule {order['capsule']}\n" if order['capsule'] is not None else "\n"
                     text += display_order(order['coffee']) + "\n"
-                    keyboard.append([InlineKeyboardButton(f"Annuler la tasse {order['capsule']}", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CANCEL, order['capsule']))])
+                    keyboard.append([InlineKeyboardButton(f"Annuler la tasse {order['capsule']}", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CANCEL, [str(order['tasse'])]))])
                 return text, InlineKeyboardMarkup(keyboard)
         case consts.ORDER_VALIDATION:
             coffees = data[1:]
@@ -187,7 +188,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         case consts.ORDER_DROP:
             return "N'hésite pas à cliquer ci-dessous si tu veux du café !", get_start_order_keyboard(user_id)
         case consts.ORDER_CANCEL:
-            database.delete_command(user_id, data[1])
+            database.delete_command(user_id, int(data[1]))
             return "Ta commande a bien été annulée !", get_start_order_keyboard(user_id)
         case _ if database.ongoing_cycle():
             # sort data to have options at the end
