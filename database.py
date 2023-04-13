@@ -57,7 +57,7 @@ def delete_user(user_id):
 # store a element of a user command in the database
 def new_command(user_id, capsule, list_command):
     actual_command = None if not ongoing_cycle() else command_table.find({"command_id": return_commandid(), "user_id": user_id})
-    
+
     if actual_command is not None:
         tasse = len(command_table.distinct("tasse", {"user_id": user_id}))
     else:
@@ -90,9 +90,7 @@ def delete_command(user_id, tasse):
     return
 
 
-def return_all_command(user_id=None) -> list[dict[str, str, list[str]]]:
-                                    #user_id, capsule, coffee
-
+def return_all_command(user_id=None) -> list[dict[str, str, str, list[str]]]:
     if ongoing_cycle():
         command_id = return_commandid()
     else:
@@ -100,7 +98,7 @@ def return_all_command(user_id=None) -> list[dict[str, str, list[str]]]:
         # Return a list of commands with coffee field grouped by user_id and command_id and tasse
     list = []
     if user_id is not None:
-        users = user_id
+        users = [user_id]
     else:
         users = command_table.distinct('user_id',{"command_id": command_id})
     for user in users:
@@ -108,11 +106,12 @@ def return_all_command(user_id=None) -> list[dict[str, str, list[str]]]:
         for tasse in tasses:
             commands = command_table.find({"command_id": command_id, "user_id": user, "tasse": tasse})
             capsule = None if commands[0]['capsule'] is None else (capsule_table.find_one({"_id": commands[0]['capsule']})['name']) 
+            tasse = commands[0]['tasse']
             list_temp = []
             for command in commands:
                 list_temp.append(coffee_table.find_one({"_id": command['coffee']})['short_name'])
             user_name = user_table.find_one({"user_id":user})['name']
-            list.append({"user_id": user_name, "capsule": capsule, "coffee": list_temp})
+            list.append({"user_id": user_name, "capsule": capsule, "tasse": tasse, "coffee": list_temp})
     return list
 
 def return_all_user_command(user_id):
