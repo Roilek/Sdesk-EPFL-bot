@@ -85,7 +85,7 @@ def delete_command(user_id, tasse):
     command_table.delete_many({"user_id": user_id, "command_id": command_id, "tasse": tasse})
     return
 
-def return_all_command() -> list[dict[str, str, list[str]]]:
+def return_all_command(user_id=None) -> list[dict[str, str, list[str]]]:
                                     #user_id, capsule, coffee
     if ongoing_cycle():
         command_id = return_commandid()
@@ -93,26 +93,21 @@ def return_all_command() -> list[dict[str, str, list[str]]]:
         return 
     # Return a list of commands with coffee field grouped by user_id and command_id and tasse
     list = []
-
-    user = command_table.distinct('user_id',{"command_id": command_id})
-    for user_id in user:
-        tasses = command_table.distinct('tasse', {"command_id": command_id, "user_id": user_id})
+    if user_id is not None:
+        users = user_id
+    else:
+        users = command_table.distinct('user_id',{"command_id": command_id})
+    for user in users:
+        tasses = command_table.distinct('tasse', {"command_id": command_id, "user_id": user})
         for tasse in tasses:
-            commands = command_table.find({"command_id": command_id, "user_id": user_id, "tasse": tasse})
+            commands = command_table.find({"command_id": command_id, "user_id": user, "tasse": tasse})
             capsule = None if commands[0]['capsule'] is None else (capsule_table.find_one({"_id": commands[0]['capsule']})['name']) 
             list_temp = []
             for command in commands:
                 list_temp.append(coffee_table.find_one({"_id": command['coffee']})['short_name'])
-            user_name = user_table.find_one({"user_id":user_id})['name']
+            user_name = user_table.find_one({"user_id":user})['name']
             list.append({"user_id": user_name, "capsule": capsule, "coffee": list_temp})
     return list
-
-def return_user_commande(user_id):
-    if ongoing_cycle():
-        command_id = return_commandid()
-    else:
-        return 
-    return command_table.find({"command_id": command_id, "user_id": user_id})
 
 def return_all_user_command(user_id):
     return command_table.find({"user_id": user_id})
