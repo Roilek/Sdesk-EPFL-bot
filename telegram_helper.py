@@ -115,13 +115,14 @@ def init_order() -> InlineKeyboardMarkup:
 def get_list() -> str:
     """Get the list of orders."""
     orders = database.return_all_command()
+    print(orders)
     if len(orders) == 0:
         return "Aucune commande n'a été passée pour le moment"
     else:
         text = "Liste des commandes\n\n"
         for order in orders:
-            text += f"{order['user_name']}"
-            text += f" avec une capsule {order['capsule']}\n" if order['capsule'] is not None else "\n"
+            text += f"{order['user_id']} a commandé"
+            text += f" avec une capsule {order['capsule']} :\n" if order['capsule'] is not None else " :\n"
             text += display_order(order['coffee']) + "\n"
         return text
 
