@@ -90,13 +90,13 @@ def create_button(text: str, callback_data: str) -> InlineKeyboardButton:
     return InlineKeyboardButton(text, callback_data=callback_data)
 
 
-def get_start_order_keyboard(user_id) -> InlineKeyboardMarkup:
+def get_start_order_keyboard(user_id=None) -> InlineKeyboardMarkup:
     """Create the launch order button."""
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("Je veux un café ☕️", callback_data=get_callback(consts.GLOU_COMMAND))],
-        [InlineKeyboardButton("Editer mes commandes en cours 🕓",
-                              callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_OWN_ORDERS))],
-        [InlineKeyboardButton("Voir toutes les commandes en cours 📝", callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))],
+        # [InlineKeyboardButton("Editer mes commandes en cours 🕓",
+        #                       callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_OWN_ORDERS))],
+        # [InlineKeyboardButton("Voir toutes les commandes en cours 📝", callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))],
     ])
     return reply_markup
 
