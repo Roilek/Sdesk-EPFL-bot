@@ -14,7 +14,6 @@ consts.COFFEE_COMMAND = "coffee"
 
 consts.CYCLE_START = "start_cycle"
 consts.CYCLE_STOP = "stop_cycle"
-consts.CYCLE_DROP = "drop_cycle"
 consts.CYCLE_LIST = "list_cycle"
 consts.CYCLE_OWN_ORDERS = "own_orders_cycle"
 
@@ -55,7 +54,9 @@ def get_callback(command: str, add_data: str = None, data: list[str] = None) -> 
 
 def get_coffee_options() -> (str, InlineKeyboardMarkup):
     if not database.ongoing_cycle():
-        return "Aucune commande n'est en cours", get_coffee_waiting_keyboard()
+        text = "C'est l'heure des cafés 🔔\n"
+        text += "Mais aucune commande n'est en cours..."
+        return text, get_coffee_waiting_keyboard()
     else:
         return "Quelle sera ta source d'énergie aujourd'hui ?", init_order()
 
@@ -115,7 +116,6 @@ def init_order() -> InlineKeyboardMarkup:
 def get_list() -> str:
     """Get the list of orders."""
     orders = database.return_all_command()
-    print(orders)
     if len(orders) == 0:
         return "Aucune commande n'a été passée pour le moment"
     else:
@@ -137,8 +137,6 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         case consts.CYCLE_START:
             database.start_cycle()
             return "Les cafés sont lancés ! Quel café veux-tu ?", init_order()
-        case consts.CYCLE_DROP:
-            return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", get_start_order_keyboard()
         case consts.CYCLE_STOP:
             text = "Les commandes sont finies !\n\n"
             text += get_list()
@@ -209,10 +207,12 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
 
 def get_coffee_waiting_keyboard() -> InlineKeyboardMarkup:
     """Get the coffee waiting keyboard."""
-    keyboard = [[InlineKeyboardButton("Oh no... Je m'en occupe ☕️ ➡️",
-                                      callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_START))],
-                [InlineKeyboardButton("Ah... Je vais prendre un thé alors 🫖 ❌",
-                                      callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_DROP))]]
+    keyboard = [[
+        InlineKeyboardButton("❌ Alors thé ! ❌",
+                             callback_data=get_callback(consts.COFFEE_COMMAND)),
+        InlineKeyboardButton("✅ C'est parti ! ✅",
+                             callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_START)),
+    ]]
     return InlineKeyboardMarkup(keyboard)
 
 
