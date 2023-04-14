@@ -59,7 +59,8 @@ def new_command(user_id, capsule, list_command):
     actual_command = None if not ongoing_cycle() else command_table.find({"command_id": return_commandid(), "user_id": user_id})
 
     if actual_command is not None:
-        tasse = len(command_table.distinct("tasse", {"user_id": user_id, "command_id": return_commandid()}))
+        tasses = command_table.distinct("tasse", {"user_id": user_id, "command_id": return_commandid()})
+        tasse = max(tasses) + 1
     else:
         tasse = 0
     for command in list_command:
@@ -284,4 +285,3 @@ if __name__ == "__main__":
     # print(test_connection(connect()))
     init()
     print("-----")
-    print(return_all_command())
