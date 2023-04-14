@@ -21,7 +21,6 @@ consts.CYCLE_OWN_ORDERS = "own_orders_cycle"
 consts.ORDER_START = "start_order"
 consts.ORDER_VALIDATION = "validate_order"
 consts.ORDER_CONFIRM = "confirm_order"
-consts.ORDER_DROP = "drop_order"
 consts.ORDER_CANCEL = "cancel_order"
 
 consts.GLOU_COMMAND = "glou"
@@ -90,13 +89,15 @@ def create_button(text: str, callback_data: str) -> InlineKeyboardButton:
     return InlineKeyboardButton(text, callback_data=callback_data)
 
 
-def get_start_order_keyboard(user_id=None) -> InlineKeyboardMarkup:
+def get_start_order_keyboard() -> InlineKeyboardMarkup:
     """Create the launch order button."""
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("Je veux un café ☕️", callback_data=get_callback(consts.GLOU_COMMAND))],
-        # [InlineKeyboardButton("Editer mes commandes en cours 🕓",
-        #                       callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_OWN_ORDERS))],
-        # [InlineKeyboardButton("Voir toutes les commandes en cours 📝", callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))],
+        [
+            InlineKeyboardButton("Mes commandes 🕓",
+                              callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_OWN_ORDERS)),
+            InlineKeyboardButton("Faire les cafés 📝", callback_data=get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))
+        ],
     ])
     return reply_markup
 
@@ -108,9 +109,7 @@ def append_buttons(keyboard: InlineKeyboardMarkup, buttons: list) -> InlineKeybo
 
 def init_order() -> InlineKeyboardMarkup:
     """Init the order."""
-    return append_buttons(append_buttons(get_coffee_options_keyboard(), [
-        create_button("❌ En fait je ne veux pas de café ❌", get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]),
-                          [create_button("Voir les commandes", get_callback(consts.COFFEE_COMMAND, consts.CYCLE_LIST))])
+    return append_buttons(get_coffee_options_keyboard(), [create_button("⬅️ Retour", get_callback(consts.COFFEE_COMMAND))])
 
 
 def get_list() -> str:
@@ -130,38 +129,43 @@ def get_list() -> str:
 
 def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, InlineKeyboardMarkup):
     """Choose a coffee"""
+    if len(data) == 0:
+        text = "Bienvenue sur le bot du 1234 !\n"
+        text += "Ici tu peux commander des super cafés !\n"
+        return text, get_start_order_keyboard()
     match data[0]:
         case consts.CYCLE_START:
             database.start_cycle()
             return "Les cafés sont lancés ! Quel café veux-tu ?", init_order()
         case consts.CYCLE_DROP:
-            return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", get_start_order_keyboard(user_id)
+            return "Pas de souci, n'hésite pas à faire signe quand tu voudras des cafés !", get_start_order_keyboard()
         case consts.CYCLE_STOP:
             text = "Les commandes sont finies !\n\n"
             text += get_list()
             database.stop_cycle()
-            return text, get_start_order_keyboard(user_id)
+            return text, get_start_order_keyboard()
         case consts.CYCLE_LIST:
             return get_list(), append_buttons(InlineKeyboardMarkup([]),
-                                              [create_button("Back", get_callback(consts.GLOU_COMMAND)),
-                                               create_button("Stop",
+                                              [create_button("⬅️ Retour", get_callback(consts.COFFEE_COMMAND)),
+                                               create_button("Je fais les cafés !",
                                                              get_callback(consts.COFFEE_COMMAND, consts.CYCLE_STOP))])
         case consts.CYCLE_OWN_ORDERS:
             orders = database.return_all_command(user_id)
-            keyboard = [[InlineKeyboardButton("Back", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP))]] # TODO change order_drop
+            keyboard = [[InlineKeyboardButton("⬅️ Retour", callback_data=get_callback(consts.COFFEE_COMMAND))]]
             if len(orders) == 0:
-                return "Tu n'as pas de commandes en cours", get_start_order_keyboard(user_id)
+                text = "Tu n'as pas de commandes en cours"
             else:
                 text = "Liste de tes commandes en cours\n\n"
-                for order in orders:
-                    text += "Command"
-                    text += f" avec une capsule {order['capsule']}\n" if order['capsule'] is not None else "\n"
+                for i in range(len(orders)):
+                    order = orders[i]
+                    text += "Tasse n°" + str(i + 1)
+                    text += f" avec une capsule {order['capsule']} :\n" if order['capsule'] is not None else " :\n"
                     text += display_order(order['coffee']) + "\n"
-                    keyboard.append([InlineKeyboardButton(f"Annuler la tasse {order['capsule']}", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CANCEL, [str(order['tasse'])]))])
-                return text, InlineKeyboardMarkup(keyboard)
+                    keyboard.append([InlineKeyboardButton(f"Annuler la tasse n°{str(i+1)}", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CANCEL, [str(order['tasse'])]))])
+            return text, InlineKeyboardMarkup(keyboard)
         case consts.ORDER_VALIDATION:
             coffees = data[1:]
-            text = "Récapitulatif de ta commande :\n" + display_order(coffees)
+            text = "Récapitulatif de ta tasse :\n" + display_order(coffees)
             keyboard = [
                 [InlineKeyboardButton("Recommencer ❌", callback_data=get_callback(consts.GLOU_COMMAND)),
                  InlineKeyboardButton("Ajouter ➕", callback_data=get_callback(consts.COFFEE_COMMAND, None, coffees)),
@@ -184,21 +188,19 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                 if capsule is not None:
                     break
             database.new_command(user_id, capsule, data[1:])
-            return "Ta commande a bien été prise en compte !", get_start_order_keyboard(user_id)
-        case consts.ORDER_DROP:
-            return "N'hésite pas à cliquer ci-dessous si tu veux du café !", get_start_order_keyboard(user_id)
+            return "Ta commande a bien été prise en compte !", get_start_order_keyboard()
         case consts.ORDER_CANCEL:
             database.delete_command(user_id, int(data[1]))
-            return "Ta commande a bien été annulée !", get_start_order_keyboard(user_id)
+            return "Ta tasse a bien été annulée !", get_start_order_keyboard()
         case _ if database.ongoing_cycle():
             # sort data to have options at the end
-            text = "Ta commande pour le moment\n"
+            text = "Ta tasse pour le moment\n"
             text += display_order(data)
             text += "\nVeux-tu ajouter quelque chose ?"
             return text, append_buttons(get_coffee_options_keyboard(options=True, data=data),
                                         [create_button("⬅️ Annuler ❌",
-                                                       get_callback(consts.COFFEE_COMMAND, consts.ORDER_DROP)),
-                                         create_button("✅ Valider ➡️",
+                                                       get_callback(consts.COFFEE_COMMAND)),
+                                         create_button("✅ Commander ➡️",
                                                        get_callback(consts.COFFEE_COMMAND, consts.ORDER_VALIDATION,
                                                                     data))])
         case _:  # no ongoing cycle
