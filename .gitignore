@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Elior stuff to ignore in addition to the default .gitignore
+.DS_Store
+.idea/
+testselior.py
