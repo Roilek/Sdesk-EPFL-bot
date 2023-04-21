@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, ReplyKeyboardRemove
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQueryHandler
 

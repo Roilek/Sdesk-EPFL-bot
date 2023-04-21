@@ -58,9 +58,9 @@ def delete_user(user_id):
 def new_command(user_id, capsule, list_command):
     actual_command = None if not ongoing_cycle() else command_table.find({"command_id": return_commandid(), "user_id": user_id})
 
-    if actual_command is not None:
-        tasses = command_table.distinct("tasse", {"user_id": user_id, "command_id": return_commandid()})
-        tasse = max(tasses) + 1
+    tasses = command_table.distinct("tasse", {"user_id": user_id, "command_id": return_commandid()})
+    if len(tasses) > 0:
+        tasse = max(tasses, default=0) + 1
     else:
         tasse = 0
     for command in list_command:

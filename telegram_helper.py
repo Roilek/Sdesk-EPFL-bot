@@ -133,11 +133,12 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
         text = "Bienvenue sur le bot du 1234 !\n"
         text += "Ici tu peux commander des super cafés !\n"
         return text, get_start_order_keyboard()
+    ongoing_cycle = database.ongoing_cycle()
     match data[0]:
         case consts.CYCLE_START:
             database.start_cycle()
             return "Les cafés sont lancés ! Quel café veux-tu ?", init_order()
-        case consts.CYCLE_STOP:
+        case consts.CYCLE_STOP if ongoing_cycle:
             text = "Les commandes sont finies !\n\n"
             text += get_list()
             database.stop_cycle()
@@ -161,7 +162,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                     text += display_order(order['coffee']) + "\n"
                     keyboard.append([InlineKeyboardButton(f"Annuler la tasse n°{str(i+1)}", callback_data=get_callback(consts.COFFEE_COMMAND, consts.ORDER_CANCEL, [str(order['tasse'])]))])
             return text, InlineKeyboardMarkup(keyboard)
-        case consts.ORDER_VALIDATION:
+        case consts.ORDER_VALIDATION if ongoing_cycle:
             coffees = data[1:]
             text = "Récapitulatif de ta tasse :\n" + display_order(coffees)
             keyboard = [
@@ -179,7 +180,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                                                                                      coffees[:i] + coffees[i + 1:]))])
 
             return text, InlineKeyboardMarkup(keyboard)
-        case consts.ORDER_CONFIRM:
+        case consts.ORDER_CONFIRM if ongoing_cycle:
             capsule = None
             for i in range(len(data) - 1, 0, -1):
                 capsule = database.capsule_short_name_from_coffee_short_name(data[i])
@@ -187,10 +188,10 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                     break
             database.new_command(user_id, capsule, data[1:])
             return "Ta commande a bien été prise en compte !", get_start_order_keyboard()
-        case consts.ORDER_CANCEL:
+        case consts.ORDER_CANCEL if ongoing_cycle:
             database.delete_command(user_id, int(data[1]))
             return "Ta tasse a bien été annulée !", get_start_order_keyboard()
-        case _ if database.ongoing_cycle():
+        case _ if ongoing_cycle:
             # sort data to have options at the end
             text = "Ta tasse pour le moment\n"
             text += display_order(data)
@@ -202,7 +203,7 @@ def handle_callback_query_coffee(data: list, user_id: int = None) -> (str, Inlin
                                                        get_callback(consts.COFFEE_COMMAND, consts.ORDER_VALIDATION,
                                                                     data))])
         case _:  # no ongoing cycle
-            return get_coffee_options()
+            return "Le cycle de commandes est terminé, tu peux en relancer un !", get_start_order_keyboard()
 
 
 def get_coffee_waiting_keyboard() -> InlineKeyboardMarkup:
